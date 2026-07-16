@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carnet d'Étude — 학습 플래너</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&display=swap');
+  :root {
+    --ink:#191C22; --paper:#F6F7F5; --klein:#002FA7; --mute:#8A8F98;
+    --line:#DDDFDA; --soft:#EDEEEA; --warn:#B3261E; --sky:#7FA0FF;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif; }
+  .serif { font-family:'Noto Serif KR','Apple SD Gothic Neo',serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:24px 20px 60px; }
+  button { cursor:pointer; font-family:inherit; }
+  input, select, textarea { font-family:inherit; }
+  input:focus, textarea:focus, select:focus { outline:2px solid var(--klein); outline-offset:1px; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+
+  header { display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:12px; border-bottom:1px solid var(--ink); padding-bottom:14px; }
+  .brand { font-size:11px; letter-spacing:.18em; color:var(--mute); }
+  nav { display:flex; gap:4px; }
+  nav button { border:none; padding:6px 14px; font-size:14px; border-radius:2px;
+    background:transparent; color:var(--ink); }
+  nav button.active { background:var(--ink); color:var(--paper); font-weight:700; }
+  .placard { background:#fff; border:1px solid var(--line); border-left:4px solid var(--klein);
+    padding:6px 14px; text-align:left; }
+  .placard .lbl { font-size:9px; letter-spacing:.14em; color:var(--mute); }
+  .placard .num { font-size:20px; font-weight:700; color:var(--klein); line-height:1.1; }
+  .panel { margin-top:10px; background:#fff; border:1px solid var(--line);
+    padding:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .panel input { border:1px solid var(--line); padding:6px 8px; font-size:13px; }
+
+  .datenav { display:flex; align-items:center; gap:10px; margin-top:20px; }
+  .datenav h1 { font-size:20px; font-weight:700; margin:0; }
+  .rndbtn { border:1px solid var(--line); background:#fff; width:30px; height:30px;
+    border-radius:15px; font-size:14px; }
+  .todaylink { border:none; background:none; color:var(--klein); font-size:12px; text-decoration:underline; }
+
+  .timerbox { margin-top:18px; background:var(--ink); color:var(--paper); padding:20px 22px; }
+  .timerbox .top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+  .eyebrow { font-size:10px; letter-spacing:.18em; color:var(--mute); }
+  .eyebrow.on { color:var(--sky); }
+  .bigtime { font-size:40px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .subjbtns { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  .subjbtns button { border:1px solid #3A3E46; background:transparent; color:var(--paper);
+    padding:7px 14px; font-size:13px; border-radius:2px; }
+  .subjbtns button.on { border-color:var(--klein); background:var(--klein); }
+
+  h2.sec { font-size:15px; font-weight:700; border-bottom:1px solid var(--ink);
+    padding-bottom:6px; margin:28px 0 12px; }
+  h2.sec small { font-weight:400; font-size:12px; color:var(--mute); }
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+  .bar-row .nm { width:72px; font-size:13px; }
+  .bar-row .tr { flex:1; background:#fff; border:1px solid var(--line); height:14px; }
+  .bar-row .fl { height:100%; background:var(--klein); transition:width .5s; }
+  .bar-row .val { width:76px; font-size:12px; color:var(--mute); text-align:right; font-variant-numeric:tabular-nums; }
+  .empty { font-size:13px; color:var(--mute); }
+
+  .addrow { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .addrow select { border:1px solid var(--line); background:#fff; padding:8px; font-size:13px; }
+  .addrow input { flex:1; min-width:200px; border:1px solid var(--line); padding:8px 10px; font-size:14px; }
+  .addrow .add { border:none; background:var(--ink); color:#fff; padding:8px 18px; font-size:13px; }
+  .task { display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line);
+    padding:10px 12px; margin-bottom:6px; }
+  .task .chk { width:20px; height:20px; border-radius:10px; flex-shrink:0; border:2px solid var(--line);
+    background:#fff; color:#fff; font-size:11px; line-height:16px; padding:0; }
+  .task.done .chk { border-color:var(--klein); background:var(--klein); }
+  .task .tag { font-size:11px; color:var(--klein); border:1px solid var(--klein);
+    padding:1px 7px; border-radius:10px; flex-shrink:0; }
+  .task .txt { flex:1; font-size:14px; }
+  .task.done .txt { text-decoration:line-through; color:var(--mute); }
+  .task .del { border:none; background:none; color:var(--mute); font-size:15px; }
+
+  textarea.note { width:100%; border:1px solid var(--line); padding:10px 12px; font-size:14px;
+    resize:vertical; background:#fff; }
+
+  .sleepbox { margin-top:18px; background:#fff; border:1px solid var(--line); padding:18px 20px; }
+  .sleepbox .row { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-end; }
+  .sleepbox .fld div { font-size:12px; color:var(--mute); margin-bottom:4px; }
+  .sleepbox input[type=time] { border:1px solid var(--line); padding:8px 10px; font-size:16px; }
+  .sleepbox .dur { margin-left:auto; text-align:right; }
+  .sleepbox .dur .num { font-size:28px; font-weight:700; color:var(--klein); }
+  .sleepbox .dur .num.low { color:var(--warn); }
+  .warnmsg { margin-top:10px; font-size:12px; color:var(--warn); }
+
+  .legend { display:flex; gap:14px; font-size:11px; color:var(--mute); margin-bottom:10px; }
+  .sw { display:inline-block; width:10px; height:10px; margin-right:5px; vertical-align:middle; }
+  .chart-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; cursor:pointer; padding:3px 4px; }
+  .chart-row.cur { background:#fff; }
+  .chart-row .d { width:42px; font-size:11px; color:var(--mute); }
+  .chart-row .d.today { color:var(--klein); font-weight:700; }
+  .chart-row .bars { flex:1; }
+  .chart-row .tr { background:var(--soft); height:9px; }
+  .chart-row .tr + .tr { margin-top:2px; }
+  .chart-row .fl { height:100%; transition:width .4s; }
+  .chart-row .v { width:118px; font-size:11px; color:var(--mute); text-align:right; font-variant-numeric:tabular-nums; }
+  .analyse { margin-top:26px; background:var(--ink); color:var(--paper); padding:18px 20px; }
+  .analyse .eyebrow { color:var(--sky); margin-bottom:8px; }
+  .analyse .body { font-size:14px; line-height:1.8; }
+  .analyse .dim { font-size:12px; color:#C9CCD2; line-height:1.7; }
+  .analyse b { color:var(--sky); }
+
+  .method { background:#fff; border:1px solid var(--line); margin-bottom:10px; }
+  .method .head { width:100%; text-align:left; background:none; border:none; padding:14px 16px;
+    display:flex; align-items:baseline; gap:12px; }
+  .method .head .nm { font-size:16px; font-weight:700; }
+  .method.open .head .nm { color:var(--klein); }
+  .method .head .og { font-size:11px; color:var(--mute); flex:1; }
+  .method .body { padding:0 16px 16px; border-top:1px solid var(--line); display:none; }
+  .method.open .body { display:block; }
+  .method p.core { font-size:14px; line-height:1.75; margin:12px 0; }
+  .method .whybox { border-left:3px solid var(--klein); padding-left:12px; margin:12px 0; }
+  .method .whybox p { font-size:13px; line-height:1.7; margin:0; color:#3A3E46; }
+  .method ol { margin:0; padding-left:18px; }
+  .method ol li { font-size:13px; line-height:1.8; }
+  .method .fit { margin-top:12px; font-size:12px; }
+  .method .fit .tag { color:var(--klein); border:1px solid var(--klein); padding:2px 8px; border-radius:10px; }
+  .method .fit .tx { margin-left:8px; color:#3A3E46; }
+
+  footer { margin-top:36px; text-align:center; }
+  footer .quote { font-size:11px; color:var(--mute); letter-spacing:.1em; margin-bottom:14px; }
+  footer .backup { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  footer .backup button { border:1px solid var(--line); background:#fff; color:var(--ink);
+    padding:7px 14px; font-size:12px; }
+  footer .hint { margin-top:8px; font-size:11px; color:var(--mute); line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div style="display:flex;align-items:baseline;gap:20px;flex-wrap:wrap">
+      <div class="brand">CARNET D'ÉTUDE</div>
+      <nav id="nav"></nav>
+    </div>
+    <button class="placard" data-action="toggleDday" title="클릭해서 수정">
+      <div class="lbl" id="ddayLbl"></div>
+      <div class="num serif" id="ddayNum"></div>
+    </button>
+  </header>
+  <div class="panel" id="ddayPanel" hidden>
+    <input data-bind="ddayLabel" style="width:110px" placeholder="이름 (예: 수능)">
+    <input data-bind="ddayDate" type="date">
+    <button data-action="closeDday" style="border:none;background:var(--klein);color:#fff;padding:7px 14px;font-size:13px">완료</button>
+  </div>
+
+  <main id="page"></main>
+
+  <footer>
+    <div class="quote">« Le génie, c'est la patience. » — 이 기기의 브라우저에 자동 저장됩니다</div>
+    <div class="backup">
+      <button data-action="export">백업 내보내기 (.json)</button>
+      <button data-action="import">백업 가져오기</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <div class="hint">데이터는 이 기기·이 브라우저에만 저장돼요. 기기를 바꾸거나 브라우저 데이터를 지우기 전에<br>꼭 백업을 내보내 두고, 새 기기에서 가져오기 하세요.</div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+// ─── 저장소 (Safari 사생활 보호 모드 대비 try/catch) ───
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} },
+};
+
+// ─── 기본값 ───
+const DEFAULT_SETTINGS = { ddayLabel:"수능", ddayDate:"2026-11-19",
+  subjects:["국어","수학","영어","프랑스어","사탐","기타"] };
+
+// ─── 유틸 ───
+const pad = n => String(n).padStart(2,"0");
+const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const shiftDate = (key,days) => { const [y,m,d]=key.split("-").map(Number);
+  const dt=new Date(y,m-1,d+days); return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`; };
+const fmtDate = key => { const [y,m,d]=key.split("-").map(Number); const dt=new Date(y,m-1,d);
+  return `${y}년 ${m}월 ${d}일 (${"일월화수목금토"[dt.getDay()]})`; };
+const shortDate = key => { const [,m,d]=key.split("-").map(Number); return `${m}/${d}`; };
+const fmtHMS = s => `${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`;
+const fmtHM = s => { const h=Math.floor(s/3600), m=Math.floor(s%3600/60);
+  return h>0 ? `${h}시간 ${m}분` : `${m}분`; };
+const fmtMin = min => { if(min==null) return "—"; const h=Math.floor(min/60), m=min%60;
+  return m===0 ? `${h}시간` : `${h}시간 ${m}분`; };
+const ddayCount = t => { const [y,m,d]=t.split("-").map(Number); const now=new Date();
+  return Math.round((new Date(y,m-1,d)-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/864e5); };
+const sleepMinutes = (bed,wake) => { if(!bed||!wake) return null;
+  const [bh,bm]=bed.split(":").map(Number), [wh,wm]=wake.split(":").map(Number);
+  let diff = wh*60+wm-(bh*60+bm); if(diff<=0) diff+=1440; return diff; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const emptyDay = () => ({ tasks:[], time:{}, note:"", sleep:{bed:"",wake:""} });
+
+// ─── 상태 ───
+let settings = Object.assign({}, DEFAULT_SETTINGS, JSON.parse(store.get("planner:settings")||"null")||{});
+let summary  = JSON.parse(store.get("planner:summary")||"{}");
+let page = "home";
+let dateKey = todayKey();
+let day = loadDay(dateKey);
+let running = null, tickId = null, openMethod = null;
+
+function loadDay(k){
+  const base = emptyDay();
+  const raw = store.get("planner:day:"+k);
+  if(!raw) return base;
+  try { const d = JSON.parse(raw); return Object.assign(base, d, { sleep:Object.assign({bed:"",wake:""}, d.sleep||{}) }); }
+  catch(e){ return base; }
+}
+let saveT = null;
+function saveDay(){
+  clearTimeout(saveT);
+  saveT = setTimeout(()=>{
+    store.set("planner:day:"+dateKey, JSON.stringify(day));
+    const study = Object.values(day.time).reduce((a,b)=>a+b,0);
+    summary[dateKey] = { study, sleep: sleepMinutes(day.sleep.bed, day.sleep.wake) };
+    store.set("planner:summary", JSON.stringify(summary));
+  }, 400);
+}
+function saveSettings(){ store.set("planner:settings", JSON.stringify(settings)); }
+
+// ─── 타이머 ───
+const runningSec = () => running ? Math.floor((Date.now()-running.startedAt)/1000) : 0;
+const totalSec = () => Object.values(day.time).reduce((a,b)=>a+b,0) + (running && dateKey===todayKey() ? runningSec() : 0);
+function startTimer(s){ if(running) commitTimer(); running={subject:s,startedAt:Date.now()};
+  tickId=setInterval(tick,1000); renderPage(); }
+function commitTimer(){ if(!running) return;
+  const sec=Math.floor((Date.now()-running.startedAt)/1000);
+  day.time[running.subject]=(day.time[running.subject]||0)+sec;
+  running=null; clearInterval(tickId); saveDay(); }
+function stopTimer(){ commitTimer(); renderPage(); }
+function tick(){
+  const t1=document.getElementById("timerDisplay"); if(t1) t1.textContent=fmtHMS(runningSec());
+  const t2=document.getElementById("totalDisplay"); if(t2) t2.textContent=fmtHM(totalSec());
+  const rec=document.getElementById("records"); if(rec) rec.innerHTML=recordsHTML();
+}
+window.addEventListener("beforeunload", ()=>{ // 창 닫혀도 진행 중 기록 보존
+  if(running){ const sec=Math.floor((Date.now()-running.startedAt)/1000);
+    day.time[running.subject]=(day.time[running.subject]||0)+sec;
+    store.set("planner:day:"+dateKey, JSON.stringify(day));
+    const study=Object.values(day.time).reduce((a,b)=>a+b,0);
+    summary[dateKey]={study, sleep:sleepMinutes(day.sleep.bed,day.sleep.wake)};
+    store.set("planner:summary", JSON.stringify(summary)); }
+});
+
+// ─── 공부법 데이터 ───
+const METHODS = [
+  { name:"포모도로 기법", origin:"프란체스코 치릴로(Francesco Cirillo), 1980년대 후반",
+    core:"25분 완전 집중 + 5분 휴식을 1세트로, 4세트 후 15–30분 긴 휴식. 토마토 모양 주방 타이머에서 이름이 유래했습니다.",
+    why:"집중을 '시간 단위 계약'으로 만들어 시작 장벽을 낮추고, 짧은 휴식이 주의력 고갈을 막습니다. 미루기 극복에 특히 효과적.",
+    how:["할 일 하나를 정하고 타이머 25분 시작","끝날 때까지 그 일만 (딴생각은 메모만 하고 복귀)","5분 휴식 — 자리에서 일어나기","4세트마다 20분 이상 쉬기"],
+    fit:"집중 시동이 안 걸리는 날, 암기·문제풀이 같은 단위 작업" },
+  { name:"능동적 회상 (Active Recall)", origin:"인출 연습 효과 — Roediger & Karpicke의 2006년 실험으로 유명",
+    core:"책을 다시 읽는 대신, 책을 덮고 스스로 답을 꺼내는 방식. '읽기 4번'보다 '읽기 1번 + 셀프테스트 3번'이 장기기억에 압도적으로 유리하다는 것이 실험의 요지.",
+    why:"기억은 '넣을 때'가 아니라 '꺼낼 때' 강해집니다. 인출 시도 자체가 기억 흔적을 재공고화합니다.",
+    how:["단원이 끝나면 책을 덮고 백지에 아는 것을 전부 쓰기(블러팅)","빠진 부분만 확인 후 다시 덮고 반복","문제집은 해설을 보기 전 반드시 스스로 답 구성"],
+    fit:"모든 암기 과목, 개념 정리 후 자가 점검" },
+  { name:"분산 반복 (Spaced Repetition)", origin:"헤르만 에빙하우스의 망각곡선(1885) → 라이트너 박스, Anki로 발전",
+    core:"잊을 만할 때 복습하면 같은 시간으로 훨씬 오래 기억합니다. 복습 간격을 1일 → 3일 → 1주 → 2주처럼 점점 벌리는 방식.",
+    why:"망각 직전의 '힘든 인출'이 가장 강한 기억을 만듭니다. 몰아서 10번 보는 것보다 나눠서 4번 보는 게 효율적.",
+    how:["새로 배운 내용은 당일 밤 1차 복습","3일 뒤, 1주 뒤, 2주 뒤 간격으로 재복습 일정 잡기","단어·연도·공식은 Anki 같은 SRS 앱 활용"],
+    fit:"프랑스어 단어, 한자, 연표, 공식 — 장기 누적 암기 전부" },
+  { name:"파인만 기법", origin:"물리학자 리처드 파인만의 학습 방식에서 명명",
+    core:"배운 개념을 '중학생에게 설명하듯' 쉬운 말로 다시 써 보는 것. 막히는 지점이 곧 이해가 빈 지점입니다.",
+    why:"전문용어 뒤에 숨은 '이해한 척'을 강제로 드러냅니다. 설명 가능성이 이해의 시금석.",
+    how:["개념 이름을 쓰고, 쉬운 말로 설명을 써 내려가기","막히면 그 부분만 교재로 돌아가 확인","비유·예시를 하나 이상 만들어 붙이기","설명을 더 짧고 단순하게 다듬기"],
+    fit:"철학·경제 개념, 문법 원리처럼 '왜'가 중요한 내용" },
+  { name:"코넬 노트 필기법", origin:"월터 포크(Walter Pauk), 1940년대 코넬대학교",
+    core:"페이지를 필기(오른쪽)·단서(왼쪽)·요약(하단) 세 구역으로 나눕니다. 수업 후 왼쪽에 질문/키워드를 적고, 하단에 한두 문장 요약.",
+    why:"필기 자체가 복습 도구가 됩니다. 오른쪽을 가리고 왼쪽 단서만 보며 회상하면 그대로 능동적 회상 훈련이 됩니다.",
+    how:["노트를 3구역으로 분할","수업 중엔 오른쪽에만 필기","24시간 안에 왼쪽에 질문·키워드 작성","하단 요약 → 이후 복습 땐 단서만 보고 인출"],
+    fit:"내신 수업 필기, 인강 정리" },
+  { name:"인터리빙 (교차 연습)", origin:"인지심리학의 'desirable difficulties' 연구, Robert Bjork 등",
+    core:"한 유형을 몰아서 푸는 대신(AAABBB) 유형·과목을 섞어 연습(ABCABC)합니다. 당장은 더 어렵고 성적이 낮아 보여도 시험 성적은 더 좋아집니다.",
+    why:"실전 시험은 '무슨 유형인지'부터 판별해야 합니다. 섞어 풀어야 유형 판별 능력이 함께 훈련됩니다.",
+    how:["수학 문제집을 단원 순서가 아니라 랜덤 세트로 재구성","하루 안에 2–3과목을 블록으로 교차 배치","비슷한 개념(예: 시제들)은 일부러 붙여서 비교하며 연습"],
+    fit:"수학·문법처럼 유형 판별이 절반인 과목, 모의고사 대비" },
+  { name:"SQ3R 독해법", origin:"프랜시스 로빈슨(Francis P. Robinson), 1946년 『Effective Study』",
+    core:"Survey(훑기) → Question(질문 만들기) → Read(읽기) → Recite(암송) → Review(복습)의 5단계 독해 절차.",
+    why:"질문을 먼저 만들면 읽기가 '답 찾기'가 되어 능동적으로 변합니다. 목적 없는 통독보다 이해와 파지가 좋습니다.",
+    how:["제목·소제목·그림만 먼저 훑기","소제목을 질문으로 바꾸기","질문의 답을 찾으며 읽기","책을 덮고 답을 소리 내어/글로 재구성","전체 구조를 다시 훑으며 마무리"],
+    fit:"비문학 지문 훈련, 원서·논문·교과서 독해" },
+  { name:"의식적 연습 (Deliberate Practice)", origin:"안데르스 에릭슨(K. Anders Ericsson)의 전문성 연구 — '1만 시간'의 원출처",
+    core:"그냥 오래 하는 게 아니라, 현재 실력의 경계 바로 바깥에 있는 약점을 골라 피드백을 받으며 반복하는 연습. 편안한 반복은 실력을 늘리지 않습니다.",
+    why:"시간의 양이 아니라 '불편한 지점을 겨냥했는가'가 성장을 결정합니다. 순공시간이 같아도 결과가 갈리는 이유.",
+    how:["오답·감점 원인을 유형화해 '약점 목록' 만들기","세션마다 약점 하나를 명시적 목표로 설정","풀이 직후 채점·해설로 즉각 피드백","다음 세션에서 같은 약점 재시도 → 졸업 판정"],
+    fit:"성적 정체기 돌파, 상위권 도약 구간" },
+];
+
+// ─── 렌더링 ───
+function ddayPlacardHTML(){
+  const n = ddayCount(settings.ddayDate);
+  document.getElementById("ddayLbl").textContent = `${settings.ddayLabel.toUpperCase()} · ${settings.ddayDate}`;
+  document.getElementById("ddayNum").textContent = n>0 ? `D-${n}` : n===0 ? "D-DAY" : `D+${-n}`;
+}
+function renderNav(){
+  document.getElementById("nav").innerHTML =
+    [["home","홈"],["sleep","수면"],["methods","공부법"]]
+    .map(([id,l])=>`<button data-action="page" data-arg="${id}" class="${page===id?'active':''}">${l}</button>`).join("");
+}
+function dateNavHTML(){
+  return `<div class="datenav">
+    <button class="rndbtn" data-action="prevDay" aria-label="이전 날">‹</button>
+    <h1 class="serif">${fmtDate(dateKey)}</h1>
+    <button class="rndbtn" data-action="nextDay" aria-label="다음 날">›</button>
+    ${dateKey!==todayKey() ? '<button class="todaylink" data-action="goToday">오늘로</button>' : ""}
+  </div>`;
+}
+function recordsHTML(){
+  const maxS = Math.max(1, ...settings.subjects.map(s => (day.time[s]||0) + (running&&running.subject===s?runningSec():0)));
+  let html = "";
+  for(const s of settings.subjects){
+    const sec = (day.time[s]||0) + (running&&running.subject===s&&dateKey===todayKey()?runningSec():0);
+    if(sec===0) continue;
+    html += `<div class="bar-row"><div class="nm">${esc(s)}</div>
+      <div class="tr"><div class="fl" style="width:${(sec/maxS*100).toFixed(1)}%"></div></div>
+      <div class="val">${fmtHM(sec)}</div></div>`;
+  }
+  return html || '<div class="empty">타이머를 시작하면 여기에 기록됩니다.</div>';
+}
+function tasksHTML(){
+  if(day.tasks.length===0) return '<div class="empty">첫 할 일을 추가해 보세요.</div>';
+  return day.tasks.map(t=>`
+    <div class="task ${t.done?'done':''}">
+      <button class="chk" data-action="toggleTask" data-arg="${t.id}" aria-label="완료 토글">${t.done?"✓":""}</button>
+      <span class="tag">${esc(t.subject)}</span>
+      <span class="txt">${esc(t.text)}</span>
+      <button class="del" data-action="deleteTask" data-arg="${t.id}" aria-label="삭제">×</button>
+    </div>`).join("");
+}
+function homeHTML(){
+  const done = day.tasks.filter(t=>t.done).length;
+  return `${dateNavHTML()}
+  <section class="timerbox">
+    <div class="top">
+      <div>
+        <div class="eyebrow ${running?'on':''}">${running?`EN SÉANCE — ${esc(running.subject)}`:"순공 타이머"}</div>
+        <div class="bigtime serif" id="timerDisplay">${fmtHMS(running?runningSec():0)}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="eyebrow">오늘 누적</div>
+        <div class="serif" style="font-size:20px;font-weight:700" id="totalDisplay">${fmtHM(totalSec())}</div>
+      </div>
+    </div>
+    <div class="subjbtns">
+      ${settings.subjects.map(s=>`<button data-action="timer" data-arg="${esc(s)}"
+        class="${running&&running.subject===s?'on':''}">${running&&running.subject===s?`■ ${esc(s)} 정지`:`▶ ${esc(s)}`}</button>`).join("")}
+    </div>
+  </section>
+  <h2 class="sec serif">과목별 기록</h2>
+  <div id="records">${recordsHTML()}</div>
+  <h2 class="sec serif">오늘의 할 일 <small>(<span id="taskCount">${done}/${day.tasks.length}</span>)</small></h2>
+  <div class="addrow">
+    <select id="taskSubject">${settings.subjects.map(s=>`<option>${esc(s)}</option>`).join("")}</select>
+    <input id="taskInput" placeholder="예: 수특 프랑스어 3강 작문 복습">
+    <button class="add" data-action="addTask">추가</button>
+  </div>
+  <div id="taskList">${tasksHTML()}</div>
+  <h2 class="sec serif">오늘의 한 줄</h2>
+  <textarea class="note" data-bind="note" rows="2"
+    placeholder="컨디션, 복기, 내일 다짐 — 한 줄이면 충분해요.">${esc(day.note)}</textarea>`;
+}
+function sleepChartData(){
+  const rows=[];
+  const todaySleep = sleepMinutes(day.sleep.bed, day.sleep.wake);
+  for(let i=13;i>=0;i--){
+    const k=shiftDate(todayKey(),-i);
+    const base=summary[k]||{};
+    const cur = k===dateKey;
+    rows.push({ key:k,
+      study: cur ? Object.values(day.time).reduce((a,b)=>a+b,0) : (base.study||0),
+      sleep: cur ? todaySleep : (base.sleep!=null?base.sleep:null) });
+  }
+  return rows;
+}
+function sleepChartHTML(){
+  const rows = sleepChartData();
+  const maxStudy = Math.max(1,...rows.map(r=>r.study));
+  return rows.map(r=>`
+    <div class="chart-row ${r.key===dateKey?'cur':''}" data-action="gotoDate" data-arg="${r.key}">
+      <div class="d ${r.key===todayKey()?'today':''}">${shortDate(r.key)}</div>
+      <div class="bars">
+        <div class="tr"><div class="fl" style="background:var(--klein);width:${Math.min(100,(r.sleep||0)/600*100).toFixed(1)}%"></div></div>
+        <div class="tr"><div class="fl" style="background:var(--ink);width:${(r.study/maxStudy*100).toFixed(1)}%"></div></div>
+      </div>
+      <div class="v">${r.sleep!=null?fmtMin(r.sleep):"—"} · ${r.study>0?fmtHM(r.study):"—"}</div>
+    </div>`).join("");
+}
+function sleepAnalysisHTML(){
+  const paired = sleepChartData().filter(r=>r.sleep!=null && r.study>0);
+  const good = paired.filter(r=>r.sleep>=420), bad = paired.filter(r=>r.sleep<420);
+  const avg = a => a.reduce((x,y)=>x+y.study,0)/a.length;
+  if(paired.length<3)
+    return `<div class="dim">수면과 순공이 함께 기록된 날이 3일 이상 쌓이면, 수면 7시간을 기준으로 공부량이 어떻게 달라지는지 분석해 드려요. (${paired.length}/3일)</div>`;
+  let html = '<div class="body">';
+  if(good.length) html += `<div>7시간 이상 잔 날(${good.length}일) 평균 순공: <b class="serif">${fmtHM(Math.round(avg(good)))}</b></div>`;
+  if(bad.length)  html += `<div>7시간 미만 잔 날(${bad.length}일) 평균 순공: <b class="serif">${fmtHM(Math.round(avg(bad)))}</b></div>`;
+  if(good.length && bad.length)
+    html += `<div class="dim" style="margin-top:8px">${avg(good)>avg(bad)
+      ? "충분히 잔 날 공부량이 더 많네요. 수면은 공부 시간을 뺏는 게 아니라 만들어 주고 있어요."
+      : "수면이 적은 날 공부량이 더 많게 나오지만, 그 효율이 기억으로 남는지는 별개예요. 표본이 더 쌓이면 다시 볼까요."}</div>`;
+  return html + "</div>";
+}
+function sleepHTML(){
+  const dur = sleepMinutes(day.sleep.bed, day.sleep.wake);
+  return `${dateNavHTML()}
+  <section class="sleepbox">
+    <div class="eyebrow" style="margin-bottom:10px">NUIT PRÉCÉDENTE — 전날 밤 기록</div>
+    <div class="row">
+      <div class="fld"><div>취침 시각</div><input type="time" data-bind="bed" value="${esc(day.sleep.bed)}"></div>
+      <div class="fld"><div>기상 시각</div><input type="time" data-bind="wake" value="${esc(day.sleep.wake)}"></div>
+      <div class="dur"><div class="eyebrow">수면 시간</div>
+        <div class="num serif ${dur!=null&&dur<360?'low':''}" id="sleepDur">${fmtMin(dur)}</div></div>
+    </div>
+    <div class="warnmsg" id="sleepWarn" ${dur!=null&&dur<360?"":"hidden"}>6시간 미만 — 기억 공고화는 대부분 수면 중에 일어나요. 오늘은 암기 과목 비중을 조금 줄이는 게 나을 수 있어요.</div>
+  </section>
+  <h2 class="sec serif">최근 14일 — 수면 × 순공</h2>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--klein)"></span>수면 (기준 10시간)</span>
+    <span><span class="sw" style="background:var(--ink)"></span>순공</span>
+  </div>
+  <div id="sleepChart">${sleepChartHTML()}</div>
+  <section class="analyse">
+    <div class="eyebrow">ANALYSE — 수면과 공부량의 관계</div>
+    <div id="sleepAnalysis">${sleepAnalysisHTML()}</div>
+  </section>`;
+}
+function methodsHTML(){
+  return `<div style="margin-top:22px">
+    <div class="eyebrow" style="margin-bottom:4px">MÉTHODES — 검증된 공부법 도록</div>
+    <p style="font-size:13px;color:var(--mute);line-height:1.7;margin:0 0 18px">
+      유행이 아니라 출처와 원리가 있는 방법들만 모았어요. 카드를 눌러 펼쳐 보세요.
+      핵심은 하나 — 기억은 넣을 때가 아니라 꺼낼 때 강해진다는 것.</p></div>
+  ${METHODS.map((m,i)=>`
+    <div class="method ${openMethod===i?'open':''}">
+      <button class="head" data-action="toggleMethod" data-arg="${i}">
+        <span class="nm serif">${m.name}</span><span class="og">${m.origin}</span>
+        <span style="color:var(--mute);font-size:14px">${openMethod===i?"−":"+"}</span>
+      </button>
+      <div class="body">
+        <p class="core">${m.core}</p>
+        <div class="whybox"><div class="eyebrow" style="margin-bottom:3px">왜 통하는가</div><p>${m.why}</p></div>
+        <div class="eyebrow" style="margin:12px 0 6px">이렇게 시작</div>
+        <ol>${m.how.map(h=>`<li>${h}</li>`).join("")}</ol>
+        <div class="fit"><span class="tag">이럴 때 좋아요</span><span class="tx">${m.fit}</span></div>
+      </div>
+    </div>`).join("")}
+  <div style="margin-top:16px;font-size:12px;color:var(--mute);line-height:1.7">
+    팁: 포모도로는 홈 화면의 순공 타이머와 함께 쓰면 좋아요. 25분 집중 후 정지 버튼 — 그대로 기록이 쌓입니다.</div>`;
+}
+function renderPage(){
+  document.getElementById("page").innerHTML =
+    page==="home" ? homeHTML() : page==="sleep" ? sleepHTML() : methodsHTML();
+  renderNav();
+}
+function changeDate(k){
+  commitTimer();           // 날짜 이동 시 진행 중 타이머는 원래 날짜에 기록
+  clearTimeout(saveT); store.set("planner:day:"+dateKey, JSON.stringify(day));
+  dateKey = k; day = loadDay(k); renderPage();
+}
+
+// ─── 이벤트 (위임) ───
+document.addEventListener("click", e=>{
+  const el = e.target.closest("[data-action]");
+  if(!el) return;
+  const act = el.dataset.action, arg = el.dataset.arg;
+  switch(act){
+    case "page": page = arg; renderPage(); break;
+    case "prevDay": changeDate(shiftDate(dateKey,-1)); break;
+    case "nextDay": changeDate(shiftDate(dateKey,1)); break;
+    case "goToday": changeDate(todayKey()); break;
+    case "gotoDate": changeDate(arg); break;
+    case "timer": (running && running.subject===arg) ? stopTimer() : startTimer(arg); break;
+    case "addTask": {
+      const inp = document.getElementById("taskInput");
+      const text = inp.value.trim(); if(!text) break;
+      day.tasks.push({ id:Date.now(), text, subject:document.getElementById("taskSubject").value, done:false });
+      inp.value=""; saveDay();
+      document.getElementById("taskList").innerHTML = tasksHTML();
+      document.getElementById("taskCount").textContent = `${day.tasks.filter(t=>t.done).length}/${day.tasks.length}`;
+      inp.focus(); break; }
+    case "toggleTask": {
+      const t = day.tasks.find(t=>t.id==arg); if(t){ t.done=!t.done; saveDay();
+        document.getElementById("taskList").innerHTML = tasksHTML();
+        document.getElementById("taskCount").textContent = `${day.tasks.filter(x=>x.done).length}/${day.tasks.length}`; }
+      break; }
+    case "deleteTask": {
+      day.tasks = day.tasks.filter(t=>t.id!=arg); saveDay();
+      document.getElementById("taskList").innerHTML = tasksHTML();
+      document.getElementById("taskCount").textContent = `${day.tasks.filter(t=>t.done).length}/${day.tasks.length}`;
+      break; }
+    case "toggleMethod": openMethod = (openMethod===Number(arg)) ? null : Number(arg); renderPage(); break;
+    case "toggleDday": {
+      const p = document.getElementById("ddayPanel");
+      p.hidden = !p.hidden;
+      if(!p.hidden){ p.querySelector('[data-bind=ddayLabel]').value = settings.ddayLabel;
+        p.querySelector('[data-bind=ddayDate]').value = settings.ddayDate; }
+      break; }
+    case "closeDday": document.getElementById("ddayPanel").hidden = true; break;
+    case "export": {
+      const data = {};
+      try { for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i);
+        if(k && k.startsWith("planner:")) data[k]=localStorage.getItem(k); } } catch(err){}
+      const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `carnet-backup-${todayKey()}.json`;
+      a.click(); URL.revokeObjectURL(a.href); break; }
+    case "import": document.getElementById("importFile").click(); break;
+  }
+});
+document.addEventListener("input", e=>{
+  const b = e.target.dataset.bind;
+  if(!b) return;
+  if(b==="note"){ day.note = e.target.value; saveDay(); }
+  else if(b==="bed" || b==="wake"){
+    day.sleep[b] = e.target.value; saveDay();
+    const dur = sleepMinutes(day.sleep.bed, day.sleep.wake);
+    const el = document.getElementById("sleepDur");
+    if(el){ el.textContent = fmtMin(dur); el.classList.toggle("low", dur!=null&&dur<360); }
+    const w = document.getElementById("sleepWarn"); if(w) w.hidden = !(dur!=null&&dur<360);
+    const c = document.getElementById("sleepChart"); if(c) c.innerHTML = sleepChartHTML();
+    const a = document.getElementById("sleepAnalysis"); if(a) a.innerHTML = sleepAnalysisHTML();
+  }
+  else if(b==="ddayLabel"){ settings.ddayLabel = e.target.value; saveSettings(); ddayPlacardHTML(); }
+  else if(b==="ddayDate"){ if(e.target.value){ settings.ddayDate = e.target.value; saveSettings(); ddayPlacardHTML(); } }
+});
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && e.target.id==="taskInput")
+    document.querySelector('[data-action=addTask]').click();
+});
+document.getElementById("importFile").addEventListener("change", e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try {
+      const data = JSON.parse(r.result);
+      Object.entries(data).forEach(([k,v])=>{ if(k.startsWith("planner:")) store.set(k,v); });
+      alert("백업을 불러왔어요. 새로고침합니다."); location.reload();
+    } catch(err){ alert("백업 파일을 읽을 수 없어요. 내보내기로 만든 .json 파일인지 확인해 주세요."); } };
+  r.readAsText(f);
+  e.target.value = "";
+});
+
+// ─── 시작 ───
+ddayPlacardHTML();
+renderPage();
+</script>
+</body>
+</html>
